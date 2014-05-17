@@ -409,16 +409,19 @@ class CPTO
 				                foreach( $values as $position => $id ) 
                                     {
 										/*
-										* HACK per rispecchiare l'ordinamento in tutte le lingue disponibili
-										*/									
+										* HACK to replicate order in any active language, if WPML is installed
+										*/	
+										if( defined('ICL_LANGUAGE_CODE') ):								
 										$available_language = icl_get_languages('skip_missing=0');
 										foreach($available_language as $lang){
 											$translated_id = icl_object_id($id,$_POST['post_type'],true, $lang['language_code']);
 											$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => 0), array('ID' => $translated_id) );
 											
 										}
-										//origianl
-					                    //$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => 0), array('ID' => $id) );
+										else:
+										//original code
+					                    $wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $id) );
+										endif;
 				                    } 
 			                } 
                         else 
@@ -426,8 +429,9 @@ class CPTO
 				                foreach( $values as $position => $id ) 
                                     {
 										/*
-										* HACK per rispecchiare l'ordinamento in tutte le lingue disponibili
-										*/										
+										* HACK to replicate order in any active language, if WPML is installed
+										*/	
+										if( defined('ICL_LANGUAGE_CODE') ):							
 										$current_screen = get_current_screen();
 										$available_language = icl_get_languages('skip_missing=0');
 										foreach($available_language as $lang){
@@ -435,8 +439,10 @@ class CPTO
 											$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $translated_id) );
 											
 										}
-										//origianl
-					                    //$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $id) );
+										else:
+										//original code
+					                    $wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $id) );
+										endif;
 					                    
 				                    }
 			                }
@@ -526,8 +532,7 @@ class CPTO
 					        });
 					        
 					        jQuery("#sortable").disableSelection();
-					        jQuery("#save-order").bind( "click", function() {
-								<?php // HACK insieme al nuovo ordine, invio anche il post type per passarlo poi alla funzione icl_object_id ?>
+					        jQuery("#save-order").bind( "click", function() { <?php // HACK: it saves the new order AND the post type, because it is needed to WPML icl_object_id to replicate order in other languages  ?>
 						        jQuery.post( ajaxurl, { action:'update-custom-type-order', order:jQuery("#sortable").sortable("serialize"), post_type:"<?php echo $this->current_post_type->name ?>"}, function() {
 							        jQuery("#ajax-response").html('<div class="message updated fade"><p><?php _e('Items Order Updated', 'cpt') ?></p></div>');
 							        jQuery("#ajax-response div").delay(3000).hide("slow");
