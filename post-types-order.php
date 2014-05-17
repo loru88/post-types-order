@@ -2,7 +2,7 @@
 /*
 Plugin Name: Post Types Order
 Plugin URI: http://www.nsp-code.com
-Description: Posts Order and Post Types Objects Order using a Drag and Drop Sortable javascript capability
+Description: Posts Order and Post Types Objects Order using a Drag and Drop Sortable javascript capability, WPML compatibility by loru88
 Author: Nsp Code
 Author URI: http://www.nsp-code.com 
 Version: 1.6.8
@@ -400,7 +400,7 @@ class CPTO
 		        global $wpdb;
 		        
 		        parse_str($_POST['order'], $data);
-		        
+						        
 		        if (is_array($data))
                 foreach($data as $key => $values ) 
                     {
@@ -408,14 +408,36 @@ class CPTO
                             {
 				                foreach( $values as $position => $id ) 
                                     {
-					                    $wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => 0), array('ID' => $id) );
+										/*
+										* HACK per rispecchiare l'ordinamento in tutte le lingue disponibili
+										*/									
+										$available_language = icl_get_languages('skip_missing=0');
+										foreach($available_language as $lang){
+											$translated_id = icl_object_id($id,$_POST['post_type'],true, $lang['language_code']);
+											$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => 0), array('ID' => $translated_id) );
+											
+										}
+										//origianl
+					                    //$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => 0), array('ID' => $id) );
 				                    } 
 			                } 
                         else 
                             {
 				                foreach( $values as $position => $id ) 
                                     {
-					                    $wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $id) );
+										/*
+										* HACK per rispecchiare l'ordinamento in tutte le lingue disponibili
+										*/										
+										$current_screen = get_current_screen();
+										$available_language = icl_get_languages('skip_missing=0');
+										foreach($available_language as $lang){
+											$translated_id = icl_object_id($id,$_POST['post_type'],true, $lang['language_code']);
+											$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $translated_id) );
+											
+										}
+										//origianl
+					                    //$wpdb->update( $wpdb->posts, array('menu_order' => $position, 'post_parent' => str_replace('item_', '', $key)), array('ID' => $id) );
+					                    
 				                    }
 			                }
 		            }
@@ -505,7 +527,8 @@ class CPTO
 					        
 					        jQuery("#sortable").disableSelection();
 					        jQuery("#save-order").bind( "click", function() {
-						        jQuery.post( ajaxurl, { action:'update-custom-type-order', order:jQuery("#sortable").sortable("serialize") }, function() {
+								<?php // HACK insieme al nuovo ordine, invio anche il post type per passarlo poi alla funzione icl_object_id ?>
+						        jQuery.post( ajaxurl, { action:'update-custom-type-order', order:jQuery("#sortable").sortable("serialize"), post_type:"<?php echo $this->current_post_type->name ?>"}, function() {
 							        jQuery("#ajax-response").html('<div class="message updated fade"><p><?php _e('Items Order Updated', 'cpt') ?></p></div>');
 							        jQuery("#ajax-response div").delay(3000).hide("slow");
 						        });
